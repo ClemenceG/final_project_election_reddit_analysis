@@ -19,7 +19,7 @@ def main():
     parser.add_argument('-o', '--output_file', help='JSON file to output to', required=True)
 
     args = parser.parse_args()
-    input_fn = args.subreddit_source
+    input_fn = args.infile
     output_fn = args.output_file
 
     # load json file containing a post on each line
