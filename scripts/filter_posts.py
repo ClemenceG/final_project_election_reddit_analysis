@@ -16,7 +16,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('infile', help='input json formatted posts')
-    parser.add_argument('-o', '--output_file', help='JSON file to output to', required=True)
+    parser.add_argument('-o', '--output_file', help='CSV file to output to', required=True)
 
     args = parser.parse_args()
     input_fn = args.infile
