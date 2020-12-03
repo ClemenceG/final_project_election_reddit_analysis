@@ -4,7 +4,9 @@ import json
 import argparse
 import math
 import itertools
-import csv
+import csv 
+from nltk.corpus import stopwords
+from collections import defaultdict
 
 script_dir = osp.dirname(__file__)
 
@@ -22,23 +24,17 @@ def main():
     complete_data = args.complete_data
     num_words = 10
 
-    result = {}; word_count = {}; word_frequency_by_topic = {}
-    result['Government'] = {}
-    result['Election'] = {}
-    result['Regional'] = {}
-    result['External'] = {}
-    result['Opinion'] = {}
-    result['Society'] = {}
-    word_frequency_by_topic['Government'] = {}
-    word_frequency_by_topic['Election'] = {}
-    word_frequency_by_topic['Regional'] = {}
-    word_frequency_by_topic['External'] = {}
-    word_frequency_by_topic['Opinion'] = {}
-    word_frequency_by_topic['Society'] = {}
+    stop_words = set(stopwords.words('english'))
+    result = {}; word_frequency_by_topic = {}; topic_count = {}
+    result['Government'] = {}; result['Election'] = {}; result['Regional'] = {}; result['External'] = {}; result['Opinion'] = {}; result['Society'] = {}
+    word_frequency_by_topic['Government'] = {}; word_frequency_by_topic['Election'] = {}; word_frequency_by_topic['Regional'] = {}
+    word_frequency_by_topic['External'] = {}; word_frequency_by_topic['Opinion'] = {}; word_frequency_by_topic['Society'] = {}
+    topic_count['Government'] = {}; topic_count['Election'] = {}; topic_count['Regional'] = {}
+    topic_count['External'] = {}; topic_count['Opinion'] = {}; topic_count['Society'] = {}
+    
     topics = ['Government', 'Election', 'Regional', 'External', 'Opinion', 'Society']
-    total_word_count = 0
 
-    # CLEAN THE TWO DATASETS OF NON ALPHANUMERIC CHARACTERS
+    # CLEAN THE TWO DATASETS, REMOVING NON-ALPHANUMERIC CHARACTERS
     with open(filtered_data, mode = 'r') as csvFile:
         csv_reader = csv.reader(csvFile)
         next(csv_reader)
@@ -56,28 +52,24 @@ def main():
                         if not character.isalnum() or character == ' ':
                             character = ''
 
-    # CALCULATE THE TOTAL WORD COUNT AND TERM FREQUENCY OF ALL 2000 POSTS FOR INVERSE DOCUMENT FREQUENCY
+    # CALCULATE THE NUMBER OF TOPICS THE WORD IS IN
     with open(complete_data, mode = 'r') as csvFile:
         csv_reader = csv.reader(csvFile)
         next(csv_reader)
         for row in csv_reader:
             word_string = row[1].split(" ")
             for word in word_string:
-                total_word_count += 1
-    with open(complete_data, mode = 'r') as csvFile:
+                for topic in topics:
+                    topic_count[topic][word] = 0
+    with open(filtered_data, mode = 'r') as csvFile:
         csv_reader = csv.reader(csvFile)
         next(csv_reader)
         for row in csv_reader:
             word_string = row[1].split(" ")
             for word in word_string:
-                word_count[word] = 0
-    with open(complete_data, mode = 'r') as csvFile:
-        csv_reader = csv.reader(csvFile)
-        next(csv_reader)
-        for row in csv_reader:
-            word_string = row[1].split(" ")
-            for word in word_string:
-                word_count[word] += 1
+                for topic in topics:
+                    if topic == row[2]:
+                        topic_count[topic][word] = 1
 
     # CALCULATE TERM FREQUENCY BY TOPIC
     with open(filtered_data, mode = 'r') as csvFile:
@@ -99,21 +91,29 @@ def main():
                     for word in word_string:
                         word_frequency_by_topic[topic][word] += 1
         
-    # CALCULATE TF_IDF
+    # CALCULATE TF-IDF
     for topic in word_frequency_by_topic:
         for key, value in word_frequency_by_topic[topic].items():
-            term_frequency = value
-            total_frequency = word_count[key]
-            tfidf_score = term_frequency * (math.log(total_word_count / total_frequency))
-            result[topic][key] = tfidf_score
+            if key not in stop_words:
+                term_frequency = value
+                total_frequency = 0
+                for i in topic_count:
+                    if topic_count[i][key] == 1:
+                        total_frequency += 1
+                if total_frequency != 0:
+                    result[topic][key] = term_frequency * math.log(6 / total_frequency)
 
     # FORMAT AND DISPLAY AS DICTIONARY
     for topic in result:
         result[topic] = {key:value for key, value in sorted(result[topic].items(), key = lambda item:item[1], reverse = True)}
         result[topic] = dict(itertools.islice(result[topic].items(), num_words))
-    output_file.write(json.dumps(result, indent = 4))
-    print(json.dumps(result, indent = 4))
-
+    final = {}
+    for topic in result:
+        key_iterable = result[topic].keys()
+        key_list = list(key_iterable)
+        final[topic] = key_list
+    output_file.write(json.dumps(final, indent = 4))
+    print(json.dumps(final, indent = 4))
 
 if __name__ == '__main__':
     main()
