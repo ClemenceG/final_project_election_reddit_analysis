@@ -40,19 +40,29 @@ def main():
         for row in csv_reader:
             word_string = row[1].split(" ")
             for word in word_string:
-                word = word.lower()
+                cleanword = ""
+                for character in word:
+                        if not character.isalnum():
+                            character = ''
+                        cleanword += character
+                cleanword = cleanword.lower()
                 for topic in topics:
-                    topic_count[topic][word] = 0
+                    topic_count[topic][cleanword] = 0
     with open(filtered_data, mode = 'r') as csvFile:
         csv_reader = csv.reader(csvFile)
         next(csv_reader)
         for row in csv_reader:
             word_string = row[1].split(" ")
             for word in word_string:
-                word = word.lower()
+                cleanword = ""
+                for character in word:
+                        if not character.isalnum():
+                            character = ''
+                        cleanword += character
+                cleanword = cleanword.lower()
                 for topic in topics:
                     if topic == row[2]:
-                        topic_count[topic][word] = 1
+                        topic_count[topic][cleanword] = 1
 
     # CALCULATE TERM FREQUENCY BY TOPIC
     with open(filtered_data, mode = 'r') as csvFile:
@@ -63,8 +73,13 @@ def main():
             for topic in topics:
                 if topic == row[2]:
                     for word in word_string:
-                        word = word.lower()
-                        word_frequency_by_topic[topic][word] = 0
+                        cleanword = ""
+                        for character in word:
+                            if not character.isalnum():
+                                character = ''
+                            cleanword += character
+                        cleanword = cleanword.lower()
+                        word_frequency_by_topic[topic][cleanword] = 0
     with open(filtered_data, mode = 'r') as csvFile:
         csv_reader = csv.reader(csvFile)
         next(csv_reader)       
@@ -73,8 +88,13 @@ def main():
             for topic in topics:
                 if topic == row[2]:
                     for word in word_string:
-                        word = word.lower()
-                        word_frequency_by_topic[topic][word] += 1
+                        cleanword = ""
+                        for character in word:
+                            if not character.isalnum():
+                                character = ''
+                            cleanword += character
+                        cleanword = cleanword.lower()
+                        word_frequency_by_topic[topic][cleanword] += 1
         
     # CALCULATE TF-IDF
     for topic in word_frequency_by_topic:
