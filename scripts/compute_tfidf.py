@@ -6,7 +6,6 @@ import math
 import itertools
 import csv 
 from nltk.corpus import stopwords
-from collections import defaultdict
 
 script_dir = osp.dirname(__file__)
 
@@ -22,43 +21,26 @@ def main():
     output_file = open(f'{args.output_file}', 'w')
     filtered_data = args.filtered_data
     complete_data = args.complete_data
-    num_words = 10
 
+    num_words = 10
     stop_words = set(stopwords.words('english'))
-    result = {}; word_frequency_by_topic = {}; topic_count = {}
+    topics = ['Government', 'Election', 'Regional', 'External', 'Opinion', 'Society']
+
+    result = {}; word_frequency_by_topic = {}; topic_count = {}; final = {}
     result['Government'] = {}; result['Election'] = {}; result['Regional'] = {}; result['External'] = {}; result['Opinion'] = {}; result['Society'] = {}
     word_frequency_by_topic['Government'] = {}; word_frequency_by_topic['Election'] = {}; word_frequency_by_topic['Regional'] = {}
     word_frequency_by_topic['External'] = {}; word_frequency_by_topic['Opinion'] = {}; word_frequency_by_topic['Society'] = {}
     topic_count['Government'] = {}; topic_count['Election'] = {}; topic_count['Regional'] = {}
     topic_count['External'] = {}; topic_count['Opinion'] = {}; topic_count['Society'] = {}
-    
-    topics = ['Government', 'Election', 'Regional', 'External', 'Opinion', 'Society']
 
-    # CLEAN THE TWO DATASETS, REMOVING NON-ALPHANUMERIC CHARACTERS
-    with open(filtered_data, mode = 'r') as csvFile:
-        csv_reader = csv.reader(csvFile)
-        next(csv_reader)
-        for row in csv_reader:
-            for word in row:
-                for character in word:
-                        if not character.isalnum() or character == ' ':
-                            character = ''
-    with open(complete_data, mode = 'r') as csvFile:
-        csv_reader = csv.reader(csvFile)
-        next(csv_reader)
-        for row in csv_reader:
-            for word in row:
-                for character in word:
-                        if not character.isalnum() or character == ' ':
-                            character = ''
-
-    # CALCULATE THE NUMBER OF TOPICS THE WORD IS IN
+    # CALCULATE THE NUMBER OF TOPICS EVERY TERM IS IN
     with open(complete_data, mode = 'r') as csvFile:
         csv_reader = csv.reader(csvFile)
         next(csv_reader)
         for row in csv_reader:
             word_string = row[1].split(" ")
             for word in word_string:
+                word = word.lower()
                 for topic in topics:
                     topic_count[topic][word] = 0
     with open(filtered_data, mode = 'r') as csvFile:
@@ -67,6 +49,7 @@ def main():
         for row in csv_reader:
             word_string = row[1].split(" ")
             for word in word_string:
+                word = word.lower()
                 for topic in topics:
                     if topic == row[2]:
                         topic_count[topic][word] = 1
@@ -80,15 +63,17 @@ def main():
             for topic in topics:
                 if topic == row[2]:
                     for word in word_string:
+                        word = word.lower()
                         word_frequency_by_topic[topic][word] = 0
     with open(filtered_data, mode = 'r') as csvFile:
         csv_reader = csv.reader(csvFile)
-        next(csv_reader)                    
+        next(csv_reader)       
         for row in csv_reader:
             word_string = row[1].split(" ")
             for topic in topics:
                 if topic == row[2]:
                     for word in word_string:
+                        word = word.lower()
                         word_frequency_by_topic[topic][word] += 1
         
     # CALCULATE TF-IDF
@@ -100,14 +85,12 @@ def main():
                 for i in topic_count:
                     if topic_count[i][key] == 1:
                         total_frequency += 1
-                if total_frequency != 0:
-                    result[topic][key] = term_frequency * math.log(6 / total_frequency)
+                result[topic][key] = term_frequency * math.log(6 / total_frequency)
 
     # FORMAT AND DISPLAY AS DICTIONARY
     for topic in result:
         result[topic] = {key:value for key, value in sorted(result[topic].items(), key = lambda item:item[1], reverse = True)}
         result[topic] = dict(itertools.islice(result[topic].items(), num_words))
-    final = {}
     for topic in result:
         key_iterable = result[topic].keys()
         key_list = list(key_iterable)
